@@ -21,10 +21,11 @@ export default function Home() {
       <main className="relative z-10 flex flex-1 w-full flex-col items-start justify-center gap-8 px-8 py-12 sm:pl-20 md:pl-28 lg:pl-36">
         <div className="flex w-full max-w-2xl flex-col items-start gap-8">
           <h1 className="max-w-xl text-5xl font-semibold leading-tight tracking-tight text-white sm:text-6xl">
-            Pick a book. Connect with others.
+            Pick a book. <br />
+            Connect with others.
           </h1>
-          <p className="max-w-lg text-xl leading-8 text-white/80 sm:text-2xl">
-            A place to organize your book club and then take it offline.
+          <p className="max-w-2xl text-xl leading-8 text-white/80 sm:text-2xl">
+            A place to organize your book club. Then take it offline.
           </p>
         </div>
       </main>
