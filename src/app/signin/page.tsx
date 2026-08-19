@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { getPostSignInPath } from "@/lib/auth/post-signin-redirect";
 import { auth } from "@/lib/auth/server";
 
 async function signIn(formData: FormData) {
@@ -9,13 +10,14 @@ async function signIn(formData: FormData) {
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
 
-  const { error } = await auth.signIn.email({ email, password });
-  if (error) {
+  const { data, error } = await auth.signIn.email({ email, password });
+  if (error || !data?.user) {
     redirect(
-      `/signin?error=${encodeURIComponent(error.message ?? "Something went wrong. Please try again.")}`,
+      `/signin?error=${encodeURIComponent(error?.message ?? "Something went wrong. Please try again.")}`,
     );
   }
-  redirect("/");
+
+  redirect(await getPostSignInPath(data.user.id));
 }
 
 export default async function SignInPage({

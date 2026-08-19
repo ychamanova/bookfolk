@@ -6,7 +6,7 @@ import {
   NavigationMenuItem,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
-import { auth } from "@/lib/auth/server";
+import { auth, getSessionSafely } from "@/lib/auth/server";
 import { cn } from "@/lib/utils";
 
 async function signOut() {
@@ -16,7 +16,7 @@ async function signOut() {
 }
 
 export async function NavBar() {
-  const { data: session } = await auth.getSession();
+  const { data: session } = await getSessionSafely();
 
   return (
     <nav className="w-full border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70 sticky top-0 z-50">
@@ -32,13 +32,33 @@ export async function NavBar() {
         <NavigationMenu>
           <NavigationMenuList className="flex items-center gap-2">
             {session?.user ? (
-              <NavigationMenuItem>
-                <form action={signOut}>
-                  <Button type="submit" variant="outline">
-                    Log out
-                  </Button>
-                </form>
-              </NavigationMenuItem>
+              <>
+                <NavigationMenuItem>
+                  <Link
+                    href="/book-clubs"
+                    className={cn(buttonVariants({ variant: "outline" }))}
+                  >
+                    Book Clubs
+                  </Link>
+                </NavigationMenuItem>
+
+                <NavigationMenuItem>
+                  <Link
+                    href="/account"
+                    className={cn(buttonVariants({ variant: "outline" }))}
+                  >
+                    Account
+                  </Link>
+                </NavigationMenuItem>
+
+                <NavigationMenuItem>
+                  <form action={signOut}>
+                    <Button type="submit" variant="outline">
+                      Log out
+                    </Button>
+                  </form>
+                </NavigationMenuItem>
+              </>
             ) : (
               <>
                 <NavigationMenuItem>
