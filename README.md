@@ -1,4 +1,4 @@
-# bookfolk
+# bookfolk [WIP]
 
 A place to organize your book club. Then take it offline.
 
