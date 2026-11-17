@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import { getSessionSafely } from "@/lib/auth/server";
+import { getSession } from "@/lib/auth/server";
 
 export default async function AccountPage() {
-  const { data: session } = await getSessionSafely();
+  const { data: session } = await getSession();
 
   if (!session?.user) {
     redirect("/signin");

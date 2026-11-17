@@ -1,22 +1,16 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   NavigationMenu,
   NavigationMenuItem,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
-import { auth, getSessionSafely } from "@/lib/auth/server";
+import { signOut } from "@/lib/auth/actions";
+import { getSession } from "@/lib/auth/server";
 import { cn } from "@/lib/utils";
 
-async function signOut() {
-  "use server";
-  await auth.signOut();
-  redirect("/");
-}
-
 export async function NavBar() {
-  const { data: session } = await getSessionSafely();
+  const { data: session } = await getSession();
 
   return (
     <nav className="w-full border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70 sticky top-0 z-50">

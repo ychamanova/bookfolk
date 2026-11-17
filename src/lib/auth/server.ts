@@ -1,4 +1,10 @@
 import { createNeonAuth } from "@neondatabase/auth/next/server";
+import {
+  createAuthServer,
+  extractNeonAuthCookies,
+} from "@neondatabase/auth/server";
+import { headers } from "next/headers";
+import { cache } from "react";
 
 function requireEnv(name: string) {
   const value = process.env[name];
@@ -8,24 +14,36 @@ function requireEnv(name: string) {
   return value;
 }
 
+const baseUrl = requireEnv("NEON_AUTH_BASE_URL");
+const cookieSecret = requireEnv("NEON_AUTH_COOKIE_SECRET");
+
+// Cookie-writing client: use only in Server Actions, Route Handlers, and proxy.
 export const auth = createNeonAuth({
-  baseUrl: requireEnv("NEON_AUTH_BASE_URL"),
+  baseUrl,
   cookies: {
-    secret: requireEnv("NEON_AUTH_COOKIE_SECRET"),
+    secret: cookieSecret,
   },
 });
 
-/**
- * `auth.getSession()` can try to refresh the session cookie when its local
- * cache has expired, which throws outside a Server Action/Route Handler
- * (e.g. when called from a plain Server Component like a layout or nav bar).
- * Treat that as "no confirmed session" instead of crashing the render.
- */
-export async function getSessionSafely() {
-  try {
-    return await auth.getSession();
-  } catch (error) {
-    console.error("[auth] getSession() failed during render:", error);
-    return { data: null, error };
-  }
-}
+const renderAuth = createAuthServer({
+  baseUrl,
+  cookieSecret,
+  context: async () => {
+    const requestHeaders = await headers();
+    return {
+      getCookies: () => extractNeonAuthCookies(requestHeaders),
+      getHeader: (name) => requestHeaders.get(name),
+      getOrigin: () =>
+        requestHeaders.get("origin") ??
+        requestHeaders.get("referer")?.split("/").slice(0, 3).join("/") ??
+        "",
+      getFramework: () => "nextjs",
+      // Rendering cannot persist Set-Cookie headers. Session renewal is handled
+      // by the auth proxy, Route Handler, and Server Actions instead.
+      setCookie: () => {},
+    };
+  },
+});
+
+// Deduplicate reads within a render without caching sessions across requests.
+export const getSession = cache(() => renderAuth.getSession());
