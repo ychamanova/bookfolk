@@ -1,19 +1,13 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   NavigationMenu,
   NavigationMenuItem,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
-import { auth, getSessionSafely } from "@/lib/auth/server";
+import { signOut } from "@/lib/auth/actions";
+import { getSessionSafely } from "@/lib/auth/server";
 import { cn } from "@/lib/utils";
-
-async function signOut() {
-  "use server";
-  await auth.signOut();
-  redirect("/");
-}
 
 export async function NavBar() {
   const { data: session } = await getSessionSafely();
