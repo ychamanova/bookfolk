@@ -104,3 +104,6 @@ export const bookClubInvitations = pgTable(
       .where(sql`${table.status} = 'pending'`),
   ],
 );
+
+export type BookClub = typeof bookClubs.$inferSelect;
+export type NewBookClub = typeof bookClubs.$inferInsert;
