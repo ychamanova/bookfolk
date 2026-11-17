@@ -8,3 +8,6 @@ export const bookClubs = pgTable("book_clubs", {
     .notNull()
     .defaultNow(),
 });
+
+export type BookClub = typeof bookClubs.$inferSelect;
+export type NewBookClub = typeof bookClubs.$inferInsert;
