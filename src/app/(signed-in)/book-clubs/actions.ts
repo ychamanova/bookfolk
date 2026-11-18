@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth/server";
+import { getActionSession } from "@/lib/auth/server";
 import { acceptBookClubInvitation, inviteToBookClub } from "@/lib/book-clubs";
 
 export type ClubActionState = { error?: string; success?: boolean };
@@ -12,7 +12,7 @@ export async function inviteMember(
   _previous: ClubActionState,
   formData: FormData,
 ): Promise<ClubActionState> {
-  const { data: session } = await auth.getSession();
+  const { data: session } = await getActionSession();
   if (!session?.user) redirect("/signin");
   const clubId = String(formData.get("clubId") ?? "");
   if (!uuid.test(clubId)) return { error: "Invalid book club." };
@@ -25,7 +25,9 @@ export async function inviteMember(
     revalidatePath("/book-clubs");
     return result;
   } catch (error) {
-    console.error("[book-clubs] invitation failed", error);
+    console.error("[book-clubs] invitation failed", {
+      type: error instanceof Error ? error.name : "UnknownError",
+    });
     return { error: "The invitation could not be saved. Please try again." };
   }
 }
@@ -34,7 +36,7 @@ export async function acceptInvitation(
   _previous: ClubActionState,
   formData: FormData,
 ): Promise<ClubActionState> {
-  const { data: session } = await auth.getSession();
+  const { data: session } = await getActionSession();
   if (!session?.user) redirect("/signin");
   const id = String(formData.get("invitationId") ?? "");
   if (!uuid.test(id)) return { error: "Invalid invitation." };
@@ -46,7 +48,9 @@ export async function acceptInvitation(
           "This invitation is unavailable, or your email still needs verification. Refresh and try again.",
       };
   } catch (error) {
-    console.error("[book-clubs] acceptance failed", error);
+    console.error("[book-clubs] acceptance failed", {
+      type: error instanceof Error ? error.name : "UnknownError",
+    });
     return { error: "Could not accept the invitation. Please try again." };
   }
   revalidatePath("/book-clubs");

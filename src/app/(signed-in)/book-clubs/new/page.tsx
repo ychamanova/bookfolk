@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { auth, getSession } from "@/lib/auth/server";
+import { getActionSession, getSession } from "@/lib/auth/server";
 import { createBookClubForUser } from "@/lib/book-clubs";
 
 async function createBookClub(formData: FormData) {
   "use server";
-  const { data: session } = await auth.getSession();
+  const { data: session } = await getActionSession();
   if (!session?.user) {
     redirect("/signin");
   }

@@ -78,7 +78,9 @@ function cachedSession(expiresAt: number) {
 }
 
 try {
-  const { auth, getSession } = await import("../src/lib/auth/server");
+  const { auth, getSession, getActionSession } = await import(
+    "../src/lib/auth/server"
+  );
 
   for (const cached of [undefined, "invalid-cookie", cachedSession(1)]) {
     requestHeaders = new Headers({
@@ -122,8 +124,19 @@ try {
     cookieWrites > 0,
     "The action/handler client must still persist auth cookies.",
   );
+
+  requestHeaders = new Headers({
+    cookie: `${tokenName}=test-token; ${cacheName}=${cachedSession(Math.floor(Date.now() / 1000) + 300)}`,
+  });
+  upstreamSession = null;
+  const beforeRevocationCheck = upstreamCalls;
+  assert.equal((await getActionSession()).data, null);
+  assert(
+    upstreamCalls > beforeRevocationCheck,
+    "A revoked session must not authorize writes using a valid cached cookie.",
+  );
   console.log(
-    "Passed: read-only session rendering, missing/invalid/expired/valid caches, signed-out requests, and writable action cookies.",
+    "Passed: read-only session rendering, missing/invalid/expired/valid caches, signed-out requests, writable action cookies, and revoked-session rejection for mutations.",
   );
 } finally {
   globalThis.fetch = originalFetch;

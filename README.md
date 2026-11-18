@@ -57,11 +57,16 @@ Auth email OTP service.
 Pages, layouts, and Server Components read sessions with `getSession()` from
 `src/lib/auth/server.ts`. This reader validates sessions without writing cookies
 and deduplicates reads within each render. Use `auth` from the same module in
-Server Actions, Route Handlers, and the auth proxy, where cookie writes are
-allowed. The proxy handles session renewal for protected pages.
+sign-in/sign-out actions, Route Handlers, and the auth proxy, where cookie writes
+are allowed. Actions that create clubs or invitations or accept invitations use
+`getActionSession()` to revalidate the session upstream before writing data. The
+proxy handles session renewal for protected pages.
 
 Run `npm run test:auth` to check session-cache expiration and the read-only render
 boundary. These checks use mocked auth responses and need no database or secrets.
+
+See [SECURITY_REVIEW.md](SECURITY_REVIEW.md) for the security review, dependency
+override rationale, verification results, and outstanding development-tool findings.
 
 ## Stack
 

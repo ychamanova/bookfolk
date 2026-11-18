@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createNeonAuth } from "@neondatabase/auth/next/server";
 import {
   createAuthServer,
@@ -47,3 +49,9 @@ const renderAuth = createAuthServer({
 
 // Deduplicate reads within a render without caching sessions across requests.
 export const getSession = cache(() => renderAuth.getSession());
+
+// Mutations must revalidate upstream so a revoked session cannot authorize a
+// write just because its signed render cache is still within its TTL.
+export function getActionSession() {
+  return auth.getSession({ query: { disableCookieCache: "true" } });
+}
