@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth/client";
 
-export function VerifyInvitationEmail({ email }: { email: string }) {
+export function VerifyEmailForm({ email }: { email: string }) {
   const router = useRouter();
   const codeId = useId();
   const [sent, setSent] = useState(false);
@@ -48,7 +48,8 @@ export function VerifyInvitationEmail({ email }: { email: string }) {
       });
       if (result.error)
         throw new Error(result.error.message ?? "Could not verify the code.");
-      setMessage("Email verified. Loading your invitations…");
+      setMessage("Email verified. Taking you to bookfolk…");
+      router.replace("/book-clubs");
       router.refresh();
     } catch (err) {
       setError(
@@ -62,12 +63,10 @@ export function VerifyInvitationEmail({ email }: { email: string }) {
   }
 
   return (
-    <div className="mt-6 space-y-4 rounded-xl border border-border bg-card p-5">
-      <h2 className="font-semibold">
-        Verify your email to view and accept invitations
-      </h2>
+    <div className="space-y-4 rounded-xl border border-border bg-card p-5">
+      <h2 className="font-semibold">Verify your email to continue</h2>
       <p className="text-sm text-muted-foreground">
-        Confirm that {email} belongs to you before joining a club.
+        Confirm that {email} belongs to you before using bookfolk.
       </p>
       <Button
         type="button"

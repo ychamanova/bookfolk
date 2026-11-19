@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getActionSession } from "@/lib/auth/server";
+import { requireVerifiedActionUser } from "@/lib/auth/verified";
 import { acceptBookClubInvitation, inviteToBookClub } from "@/lib/book-clubs";
 
 export type ClubActionState = { error?: string; success?: boolean };
@@ -12,13 +12,12 @@ export async function inviteMember(
   _previous: ClubActionState,
   formData: FormData,
 ): Promise<ClubActionState> {
-  const { data: session } = await getActionSession();
-  if (!session?.user) redirect("/signin");
+  const user = await requireVerifiedActionUser();
   const clubId = String(formData.get("clubId") ?? "");
   if (!uuid.test(clubId)) return { error: "Invalid book club." };
   try {
     const result = await inviteToBookClub(
-      session.user.id,
+      user.id,
       clubId,
       String(formData.get("email") ?? ""),
     );
@@ -36,12 +35,11 @@ export async function acceptInvitation(
   _previous: ClubActionState,
   formData: FormData,
 ): Promise<ClubActionState> {
-  const { data: session } = await getActionSession();
-  if (!session?.user) redirect("/signin");
+  const user = await requireVerifiedActionUser();
   const id = String(formData.get("invitationId") ?? "");
   if (!uuid.test(id)) return { error: "Invalid invitation." };
   try {
-    const accepted = await acceptBookClubInvitation(session.user.id, id);
+    const accepted = await acceptBookClubInvitation(user.id, id);
     if (!accepted)
       return {
         error:

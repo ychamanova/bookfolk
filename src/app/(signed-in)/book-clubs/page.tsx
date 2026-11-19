@@ -2,14 +2,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AcceptInvitationForm } from "@/components/book-clubs/accept-invitation-form";
 import { InviteMemberDialog } from "@/components/book-clubs/invite-member-dialog";
-import { VerifyInvitationEmail } from "@/components/book-clubs/verify-invitation-email";
+import { JoinedNotice } from "@/components/book-clubs/joined-notice";
 import { buttonVariants } from "@/components/ui/button";
 import { getSession } from "@/lib/auth/server";
 import {
   getBookClubsForUser,
   getInvitationsForUser,
   getPendingInvitationCount,
-  isEmailVerified,
 } from "@/lib/book-clubs";
 import { cn } from "@/lib/utils";
 
@@ -28,14 +27,11 @@ export default async function BookClubsPage({
 
   const { tab, joined } = await searchParams;
   const invited = tab === "invited";
-  const [bookClubs, invitations, invitationCount, verified] = await Promise.all(
-    [
-      getBookClubsForUser(session.user.id),
-      invited ? getInvitationsForUser(session.user.id) : Promise.resolve([]),
-      getPendingInvitationCount(session.user.id),
-      invited ? isEmailVerified(session.user.id) : Promise.resolve(false),
-    ],
-  );
+  const [bookClubs, invitations, invitationCount] = await Promise.all([
+    getBookClubsForUser(session.user.id),
+    invited ? getInvitationsForUser(session.user.id) : Promise.resolve([]),
+    getPendingInvitationCount(session.user.id),
+  ]);
 
   return (
     <main className="flex flex-1 justify-center px-4 py-16">
@@ -73,42 +69,34 @@ export default async function BookClubsPage({
           </Link>
         </nav>
 
-        {!invited && joined === "1" && (
-          <p role="status" className="mt-5 text-sm text-muted-foreground">
-            You joined the book club.
-          </p>
-        )}
+        {!invited && joined === "1" && <JoinedNotice />}
 
         {invited ? (
-          invitationCount > 0 && !verified ? (
-            <VerifyInvitationEmail email={session.user.email} />
-          ) : (
-            <ul className="mt-6 flex flex-col gap-3">
-              {invitations.map((invitation) => (
-                <li
-                  key={invitation.id}
-                  className="space-y-4 rounded-xl border border-border bg-card p-4 text-card-foreground"
-                >
-                  <div>
-                    <h2 className="font-medium">{invitation.club_name}</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Invited by {invitation.invited_by_name}
-                    </p>
-                  </div>
-                  <AcceptInvitationForm
-                    invitationId={invitation.id}
-                    clubName={invitation.club_name}
-                  />
-                </li>
-              ))}
-              {invitations.length === 0 && (
-                <li className="py-6 text-sm text-muted-foreground">
-                  No pending invitations. Invitations sent to{" "}
-                  {session.user.email} will appear here.
-                </li>
-              )}
-            </ul>
-          )
+          <ul className="mt-6 flex flex-col gap-3">
+            {invitations.map((invitation) => (
+              <li
+                key={invitation.id}
+                className="space-y-4 rounded-xl border border-border bg-card p-4 text-card-foreground"
+              >
+                <div>
+                  <h2 className="font-medium">{invitation.club_name}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Invited by {invitation.invited_by_name}
+                  </p>
+                </div>
+                <AcceptInvitationForm
+                  invitationId={invitation.id}
+                  clubName={invitation.club_name}
+                />
+              </li>
+            ))}
+            {invitations.length === 0 && (
+              <li className="py-6 text-sm text-muted-foreground">
+                No pending invitations. Invitations sent to {session.user.email}{" "}
+                will appear here.
+              </li>
+            )}
+          </ul>
         ) : (
           <ul className="mt-6 flex flex-col gap-2">
             {bookClubs.map((club) => (

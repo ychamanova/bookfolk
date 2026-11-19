@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppSidebar } from "@/components/nav/app-sidebar";
 import { getSession } from "@/lib/auth/server";
+import { isEmailVerified } from "@/lib/book-clubs";
 
 export default async function SignedInLayout({
   children,
@@ -11,6 +12,11 @@ export default async function SignedInLayout({
 
   if (!session?.user) {
     redirect("/signin");
+  }
+  // Read the flag from the database, not the cached session, so it is current
+  // right after the user verifies.
+  if (!(await isEmailVerified(session.user.id))) {
+    redirect("/verify-email");
   }
 
   return (
