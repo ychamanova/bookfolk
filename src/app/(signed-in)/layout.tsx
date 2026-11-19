@@ -1,7 +1,11 @@
 import { redirect } from "next/navigation";
 import { AppSidebar } from "@/components/nav/app-sidebar";
 import { getSession } from "@/lib/auth/server";
-import { isEmailVerified } from "@/lib/book-clubs";
+import {
+  getBookClubsForUser,
+  getPendingInvitationCount,
+  isEmailVerified,
+} from "@/lib/book-clubs";
 
 export default async function SignedInLayout({
   children,
@@ -19,6 +23,11 @@ export default async function SignedInLayout({
     redirect("/verify-email");
   }
 
+  const [clubs, invitationCount] = await Promise.all([
+    getBookClubsForUser(session.user.id),
+    getPendingInvitationCount(session.user.id),
+  ]);
+
   return (
     <div className="flex min-h-dvh flex-1 flex-col md:flex-row">
       <a
@@ -29,6 +38,8 @@ export default async function SignedInLayout({
       </a>
       <AppSidebar
         user={{ name: session.user.name, email: session.user.email }}
+        clubs={clubs.map(({ id, name }) => ({ id, name }))}
+        invitationCount={invitationCount}
       />
       <div
         id="page-content"

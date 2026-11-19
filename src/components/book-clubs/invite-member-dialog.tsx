@@ -53,20 +53,16 @@ function InviteForm({ clubId }: { clubId: string }) {
 export function InviteMemberDialog({
   clubId,
   clubName,
+  open,
+  onOpenChange,
 }: {
   clubId: string;
   clubName: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
   return (
-    <Dialog.Root>
-      <Dialog.Trigger
-        render={<Button variant="ghost" size="icon" />}
-        aria-label={`Invite members to ${clubName}`}
-      >
-        <span aria-hidden className="text-xl leading-none">
-          ⋯
-        </span>
-      </Dialog.Trigger>
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/40" />
         <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-xl outline-none">

@@ -5,32 +5,41 @@ import {
   BookOpen01Icon,
   Cancel01Icon,
   Logout01Icon,
+  Mail01Icon,
   Menu01Icon,
   UserCircleIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth/actions";
 import { cn } from "@/lib/utils";
 
-const navigation = [
-  { href: "/book-clubs", label: "Book Clubs", icon: BookOpen01Icon },
-  { href: "/account", label: "Account", icon: UserCircleIcon },
-];
-
 type SidebarUser = { name?: string | null; email: string };
+type SidebarClub = { id: string; name: string };
+type SidebarData = {
+  user: SidebarUser;
+  clubs: SidebarClub[];
+  invitationCount: number;
+};
+
+const itemClass =
+  "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors outline-none hover:bg-sidebar-accent/60 focus-visible:ring-2 focus-visible:ring-sidebar-ring";
+const activeClass = "bg-sidebar-accent text-sidebar-accent-foreground";
 
 function SidebarContent({
   user,
+  clubs,
+  invitationCount,
   onNavigate,
-}: {
-  user: SidebarUser;
-  onNavigate?: () => void;
-}) {
+}: SidebarData & { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const onInvited = pathname === "/book-clubs/invited";
+  const onClubsHome =
+    pathname === "/book-clubs" || pathname === "/book-clubs/new";
+  const onAccount = pathname === "/account";
 
   return (
     <>
@@ -43,27 +52,71 @@ function SidebarContent({
       </Link>
       <nav aria-label="Main navigation" className="mt-10">
         <ul className="space-y-2">
-          {navigation.map(({ href, label, icon }) => {
-            const active = pathname === href || pathname.startsWith(`${href}/`);
-
-            return (
-              <li key={href}>
-                <Link
-                  href={href}
-                  onNavigate={onNavigate}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors outline-none hover:bg-sidebar-accent/60 focus-visible:ring-2 focus-visible:ring-sidebar-ring",
-                    active &&
-                      "bg-sidebar-accent text-sidebar-accent-foreground",
-                  )}
-                >
-                  <HugeiconsIcon icon={icon} className="size-5" aria-hidden />
-                  {label}
-                </Link>
-              </li>
-            );
-          })}
+          <li>
+            <Link
+              href="/book-clubs"
+              onNavigate={onNavigate}
+              aria-current={onClubsHome ? "page" : undefined}
+              className={cn(itemClass, onClubsHome && activeClass)}
+            >
+              <HugeiconsIcon
+                icon={BookOpen01Icon}
+                className="size-5"
+                aria-hidden
+              />
+              Your clubs
+            </Link>
+            {clubs.length > 0 && (
+              <ul className="mt-1 ml-5 space-y-1 border-l border-sidebar-border pl-3">
+                {clubs.map((club) => {
+                  const href = `/book-clubs/${club.id}`;
+                  const active = pathname === href;
+                  return (
+                    <li key={club.id}>
+                      <Link
+                        href={href}
+                        onNavigate={onNavigate}
+                        aria-current={active ? "page" : undefined}
+                        className={cn(
+                          "block truncate rounded-lg px-3 py-2 text-sm transition-colors outline-none hover:bg-sidebar-accent/60 focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+                          active &&
+                            "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
+                        )}
+                      >
+                        {club.name}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </li>
+          <li>
+            <Link
+              href="/book-clubs/invited"
+              onNavigate={onNavigate}
+              aria-current={onInvited ? "page" : undefined}
+              className={cn(itemClass, onInvited && activeClass)}
+            >
+              <HugeiconsIcon icon={Mail01Icon} className="size-5" aria-hidden />
+              Invited{invitationCount > 0 ? ` (${invitationCount})` : ""}
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/account"
+              onNavigate={onNavigate}
+              aria-current={onAccount ? "page" : undefined}
+              className={cn(itemClass, onAccount && activeClass)}
+            >
+              <HugeiconsIcon
+                icon={UserCircleIcon}
+                className="size-5"
+                aria-hidden
+              />
+              Account
+            </Link>
+          </li>
         </ul>
       </nav>
       <div className="mt-auto border-t border-sidebar-border pt-5">
@@ -90,8 +143,20 @@ function SidebarContent({
   );
 }
 
-export function AppSidebar({ user }: { user: SidebarUser }) {
+export function AppSidebar({ user, clubs, invitationCount }: SidebarData) {
   const [open, setOpen] = useState(false);
+
+  const router = useRouter();
+
+  // The layout does not re-render on soft navigation, so refresh the club list
+  // and invitation badge whenever the user comes back to the tab.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === "visible") router.refresh();
+    };
+    document.addEventListener("visibilitychange", refresh);
+    return () => document.removeEventListener("visibilitychange", refresh);
+  }, [router]);
 
   useEffect(() => {
     const desktop = window.matchMedia("(min-width: 48rem)");
@@ -105,7 +170,11 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
   return (
     <>
       <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r border-sidebar-border bg-sidebar p-6 text-sidebar-foreground md:flex">
-        <SidebarContent user={user} />
+        <SidebarContent
+          user={user}
+          clubs={clubs}
+          invitationCount={invitationCount}
+        />
       </aside>
       <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-sidebar-border bg-sidebar px-4 text-sidebar-foreground md:hidden">
         <Link href="/book-clubs" className="text-xl font-bold tracking-tight">
@@ -133,7 +202,12 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
                   aria-hidden
                 />
               </Dialog.Close>
-              <SidebarContent user={user} onNavigate={() => setOpen(false)} />
+              <SidebarContent
+                user={user}
+                clubs={clubs}
+                invitationCount={invitationCount}
+                onNavigate={() => setOpen(false)}
+              />
             </Dialog.Popup>
           </Dialog.Portal>
         </Dialog.Root>

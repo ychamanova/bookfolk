@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { PageContainer } from "@/components/ui/page-container";
 import { signOut } from "@/lib/auth/actions";
 import { getSession } from "@/lib/auth/server";
 
@@ -11,8 +13,8 @@ export default async function AccountPage() {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center px-4 py-16">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-card-foreground">
+    <PageContainer align="center" width="md">
+      <Card>
         <h1 className="text-2xl font-semibold tracking-tight">Account</h1>
         <p className="mt-2 text-muted-foreground">
           Welcome,{" "}
@@ -31,7 +33,7 @@ export default async function AccountPage() {
             Log out
           </Button>
         </form>
-      </div>
-    </main>
+      </Card>
+    </PageContainer>
   );
 }

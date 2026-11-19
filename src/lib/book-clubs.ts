@@ -51,6 +51,20 @@ export async function getBookClubsForUser(userId: string) {
     .orderBy(desc(bookClubs.createdAt));
 }
 
+export async function getBookClubForUser(userId: string, clubId: string) {
+  const [club] = await db
+    .select({
+      id: bookClubs.id,
+      name: bookClubs.name,
+      role: sql<
+        "owner" | "member"
+      >`case when ${bookClubs.ownerId} = ${userId} then 'owner' else 'member' end`,
+    })
+    .from(bookClubs)
+    .where(and(eq(bookClubs.id, clubId), accessibleClubs(userId)));
+  return club ?? null;
+}
+
 export type BookClub = Awaited<ReturnType<typeof getBookClubsForUser>>[number];
 
 export async function hasBookClubs(userId: string) {
@@ -172,7 +186,7 @@ export async function inviteToBookClub(
 export async function acceptBookClubInvitation(
   userId: string,
   invitationId: string,
-) {
+): Promise<string | null> {
   return db.transaction(async (tx) => {
     // Updating the invitation locks the row until membership is committed.
     // Only its verified recipient can claim it or retry a previous acceptance.
@@ -201,15 +215,38 @@ export async function acceptBookClubInvitation(
       )
       .returning({ clubId: invitations.clubId });
 
-    if (!accepted) return false;
+    if (!accepted) return null;
     await tx
       .insert(members)
       .values({ clubId: accepted.clubId, userId })
       .onConflictDoNothing({ target: [members.clubId, members.userId] });
-    return true;
+    return accepted.clubId;
   });
 }
 
 export async function createBookClubForUser(ownerId: string, name: string) {
-  await db.insert(bookClubs).values({ name, ownerId });
+  const [club] = await db
+    .insert(bookClubs)
+    .values({ name, ownerId })
+    .returning({ id: bookClubs.id });
+  if (!club) throw new Error("Book club insert returned no row");
+  return club.id;
+}
+
+// Members and invitations are removed by the ON DELETE CASCADE foreign keys.
+export async function deleteBookClub(ownerId: string, clubId: string) {
+  const deleted = await db
+    .delete(bookClubs)
+    .where(and(eq(bookClubs.id, clubId), eq(bookClubs.ownerId, ownerId)))
+    .returning({ id: bookClubs.id });
+  return deleted.length > 0;
+}
+
+// Owners leave by deleting the club, so only plain members can leave.
+export async function leaveBookClub(userId: string, clubId: string) {
+  const left = await db
+    .delete(members)
+    .where(and(eq(members.clubId, clubId), eq(members.userId, userId)))
+    .returning({ clubId: members.clubId });
+  return left.length > 0;
 }
