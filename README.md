@@ -33,7 +33,7 @@ direct host derived from `DATABASE_URL`. Applied migrations are recorded in
 
 The initial Drizzle migration adopts the existing tables with `IF NOT EXISTS`,
 preserving existing records and constraints. It also supports fresh databases
-after Neon Auth has been enabled. The old `migrations/` SQL and `app_migrations`
+after Neon Auth has been enabled. The old `migrations/` SQL (now removed) and `app_migrations`
 table are historical; the migration command now uses `drizzle/` exclusively.
 
 Test migrations on an isolated Neon branch before applying them to the app's

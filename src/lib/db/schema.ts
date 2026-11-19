@@ -12,14 +12,25 @@ import {
 } from "drizzle-orm/pg-core";
 import { authUsers } from "./auth-schema";
 
-export const bookClubs = pgTable("book_clubs", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  name: text("name").notNull(),
-  ownerId: text("owner_id").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
-    .defaultNow()
-    .notNull(),
-});
+export const bookClubs = pgTable(
+  "book_clubs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    name: text("name").notNull(),
+    ownerId: uuid("owner_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    foreignKey({
+      name: "book_clubs_owner_id_fkey",
+      columns: [table.ownerId],
+      foreignColumns: [authUsers.id],
+    }).onDelete("cascade"),
+    index("book_clubs_owner_idx").on(table.ownerId),
+  ],
+);
 
 export const bookClubMembers = pgTable(
   "book_club_members",
