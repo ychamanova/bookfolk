@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { VerifyEmailForm } from "@/components/auth/verify-email-form";
+import { PageContainer } from "@/components/ui/page-container";
 import { signOut } from "@/lib/auth/actions";
 import { getSession } from "@/lib/auth/server";
 import { isEmailVerified } from "@/lib/book-clubs";
@@ -12,8 +13,8 @@ export default async function VerifyEmailPage() {
   if (await isEmailVerified(session.user.id)) redirect("/book-clubs");
 
   return (
-    <main className="flex min-h-dvh flex-1 items-center justify-center px-4 py-16">
-      <div className="w-full max-w-sm space-y-4">
+    <PageContainer align="center" width="sm" className="min-h-dvh">
+      <div className="space-y-4">
         <VerifyEmailForm email={session.user.email} />
         <form action={signOut} className="text-center">
           <button
@@ -24,6 +25,6 @@ export default async function VerifyEmailPage() {
           </button>
         </form>
       </div>
-    </main>
+    </PageContainer>
   );
 }

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth/client";
 
@@ -63,7 +64,7 @@ export function VerifyEmailForm({ email }: { email: string }) {
   }
 
   return (
-    <div className="space-y-4 rounded-xl border border-border bg-card p-5">
+    <Card size="compact" className="space-y-4">
       <h2 className="font-semibold">Verify your email to continue</h2>
       <p className="text-sm text-muted-foreground">
         Confirm that {email} belongs to you before using bookfolk.
@@ -107,6 +108,6 @@ export function VerifyEmailForm({ email }: { email: string }) {
           {error}
         </p>
       )}
-    </div>
+    </Card>
   );
 }

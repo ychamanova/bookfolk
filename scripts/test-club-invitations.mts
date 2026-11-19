@@ -70,12 +70,12 @@ try {
   ]);
   assert.equal(duplicateResults.filter((result) => result.success).length, 1);
   assert.equal(await clubs.getPendingInvitationCount(recipient), 1);
-  assert.equal(await getPostSignInPath(recipient), "/book-clubs?tab=invited");
+  assert.equal(await getPostSignInPath(recipient), "/book-clubs/invited");
   const [invitation] = await clubs.getInvitationsForUser(recipient);
   assert(invitation);
   assert.equal(
     await clubs.acceptBookClubInvitation(outsider, invitation.id),
-    false,
+    null,
   );
   assert.equal(await clubs.hasBookClubs(recipient), false);
   assert.equal((await clubs.getInvitationsForUser(outsider)).length, 0);
@@ -85,7 +85,7 @@ try {
       clubs.acceptBookClubInvitation(recipient, invitation.id),
       clubs.acceptBookClubInvitation(recipient, invitation.id),
     ]),
-    [true, true],
+    [clubId, clubId],
   );
   assert.equal(await clubs.getPendingInvitationCount(recipient), 0);
   assert.equal(await getPostSignInPath(recipient), "/book-clubs");
@@ -115,7 +115,7 @@ try {
   );
   assert.equal(
     await clubs.acceptBookClubInvitation(unverified, unverifiedInvite.id),
-    false,
+    null,
   );
   await query(
     `UPDATE neon_auth."user" SET "emailVerified" = true WHERE id = $1::uuid`,
@@ -125,7 +125,7 @@ try {
   assert.equal((await clubs.getInvitationsForUser(unverified)).length, 1);
   assert.equal(
     await clubs.acceptBookClubInvitation(unverified, unverifiedInvite.id),
-    true,
+    clubId,
   );
 
   // Invites sent before signup become visible when that email creates an account.
@@ -137,10 +137,17 @@ try {
   assert(futureInvitation);
   assert.equal(
     await clubs.acceptBookClubInvitation(futureUser, futureInvitation.id),
-    true,
+    clubId,
   );
 
-  await query(`DELETE FROM book_clubs WHERE id = $1::uuid`, [clubId]);
+  assert.equal(await clubs.leaveBookClub(owner, clubId), false);
+  assert.equal(await clubs.leaveBookClub(outsider, clubId), false);
+  assert.equal(await clubs.deleteBookClub(recipient, clubId), false);
+  assert.equal(await clubs.deleteBookClub(outsider, clubId), false);
+  assert.equal((await clubs.getBookClubsForUser(owner)).length, 1);
+  assert.equal(await clubs.deleteBookClub(owner, clubId), true);
+  assert.equal(await clubs.deleteBookClub(owner, clubId), false);
+  assert.equal((await clubs.getBookClubsForUser(recipient)).length, 0);
   const [remaining] = await query(
     `SELECT
     (SELECT count(*) FROM book_club_members WHERE club_id = $1::uuid) +

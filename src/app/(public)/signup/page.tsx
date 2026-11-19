@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PageContainer } from "@/components/ui/page-container";
 import { getPostSignInPath } from "@/lib/auth/post-signin-redirect";
 import { auth } from "@/lib/auth/server";
 
@@ -29,8 +31,8 @@ export default async function SignUpPage({
   const { error } = await searchParams;
 
   return (
-    <main className="flex flex-1 items-center justify-center px-4 py-16">
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-8 text-card-foreground">
+    <PageContainer align="center" width="sm">
+      <Card>
         <h1 className="text-2xl font-semibold tracking-tight">
           Create an account
         </h1>
@@ -93,7 +95,7 @@ export default async function SignUpPage({
             Sign in
           </Link>
         </p>
-      </div>
-    </main>
+      </Card>
+    </PageContainer>
   );
 }

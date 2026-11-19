@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PageContainer } from "@/components/ui/page-container";
 import { getPostSignInPath } from "@/lib/auth/post-signin-redirect";
 import { auth } from "@/lib/auth/server";
 
@@ -28,8 +30,8 @@ export default async function SignInPage({
   const { error } = await searchParams;
 
   return (
-    <main className="flex flex-1 items-center justify-center px-4 py-16">
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-8 text-card-foreground">
+    <PageContainer align="center" width="sm">
+      <Card>
         <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Welcome back to bookfolk.
@@ -77,7 +79,7 @@ export default async function SignInPage({
             Sign up
           </Link>
         </p>
-      </div>
-    </main>
+      </Card>
+    </PageContainer>
   );
 }
