@@ -6,8 +6,6 @@ import {
   desc,
   eq,
   exists,
-  ne,
-  notExists,
   or,
   type SQLWrapper,
   sql,
@@ -99,6 +97,7 @@ export async function getPendingInvitationCount(userId: string) {
       and(
         eq(invitations.status, "pending"),
         eq(invitations.inviteeEmail, normalizedEmail(authUsers.email)),
+        eq(authUsers.emailVerified, true),
       ),
     );
   return row?.count ?? 0;
@@ -116,59 +115,58 @@ export async function inviteToBookClub(
   ownerId: string,
   clubId: string,
   rawEmail: string,
-) {
+): Promise<{ success?: true; error?: string }> {
   const email = rawEmail.trim().toLowerCase();
-  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
     return { error: "Enter a valid email address." };
   }
 
-  const invitation = await db.transaction(async (tx) => {
+  return db.transaction(async (tx) => {
     // Lock the club while checking ownership and inserting the invitation.
     // The partial unique index also protects against duplicate requests.
-    const member = alias(authUsers, "member");
-    const [eligibleClub] = await tx
-      .select({ clubId: bookClubs.id, invitedBy: authUsers.id })
+    const [club] = await tx
+      .select({ id: bookClubs.id })
       .from(bookClubs)
-      .innerJoin(authUsers, eq(authUsers.id, ownerId))
+      .where(and(eq(bookClubs.id, clubId), eq(bookClubs.ownerId, ownerId)))
+      .for("update");
+    if (!club) return { error: "Only the club owner can invite members." };
+
+    const [owner] = await tx
+      .select({ email: authUsers.email })
+      .from(authUsers)
+      .where(eq(authUsers.id, ownerId));
+    if (!owner || owner.email.trim().toLowerCase() === email) {
+      return { error: "You own this club already." };
+    }
+
+    const member = alias(authUsers, "member");
+    const [existingMember] = await tx
+      .select({ userId: members.userId })
+      .from(members)
+      .innerJoin(member, eq(member.id, members.userId))
       .where(
         and(
-          eq(bookClubs.id, clubId),
-          eq(bookClubs.ownerId, ownerId),
-          ne(normalizedEmail(authUsers.email), email),
-          notExists(
-            tx
-              .select({ clubId: members.clubId })
-              .from(members)
-              .innerJoin(member, eq(member.id, members.userId))
-              .where(
-                and(
-                  eq(members.clubId, bookClubs.id),
-                  eq(normalizedEmail(member.email), email),
-                ),
-              ),
-          ),
+          eq(members.clubId, clubId),
+          eq(normalizedEmail(member.email), email),
         ),
       )
-      .for("update", { of: bookClubs });
-    if (!eligibleClub) return undefined;
+      .limit(1);
+    if (existingMember) {
+      return { error: "This person is already a member of the club." };
+    }
 
     const [created] = await tx
       .insert(invitations)
-      .values({ ...eligibleClub, inviteeEmail: email })
+      .values({ clubId, invitedBy: ownerId, inviteeEmail: email })
       .onConflictDoNothing({
         target: [invitations.clubId, invitations.inviteeEmail],
         where: sql`${invitations.status} = 'pending'`,
       })
       .returning({ id: invitations.id });
-    return created;
+    return created
+      ? { success: true }
+      : { error: "This address has already been invited." };
   });
-
-  return invitation
-    ? { success: true }
-    : {
-        error:
-          "Could not invite this address. You must own the club, and the recipient must not be its owner, a member, or already invited.",
-      };
 }
 
 export async function acceptBookClubInvitation(

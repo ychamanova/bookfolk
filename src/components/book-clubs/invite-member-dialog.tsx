@@ -12,8 +12,8 @@ function InviteForm({ clubId }: { clubId: string }) {
   return state.success ? (
     <div className="mt-5 space-y-5">
       <p role="status" className="text-sm text-muted-foreground">
-        Invitation added. They can accept it in their Invited tab when they sign
-        in with this email.
+        Invitation saved. No email is sent, so let them know. They can accept it
+        from the Invited tab once they sign in and verify this exact address.
       </p>
       <Dialog.Close render={<Button />}>Done</Dialog.Close>
     </div>
