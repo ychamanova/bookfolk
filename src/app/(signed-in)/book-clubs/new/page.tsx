@@ -1,27 +1,25 @@
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { auth, getSessionSafely } from "@/lib/auth/server";
+import { getSession } from "@/lib/auth/server";
+import { requireVerifiedActionUser } from "@/lib/auth/verified";
 import { createBookClubForUser } from "@/lib/book-clubs";
 
 async function createBookClub(formData: FormData) {
   "use server";
-  const { data: session } = await auth.getSession();
-  if (!session?.user) {
-    redirect("/signin");
-  }
+  const user = await requireVerifiedActionUser();
 
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return;
 
-  await createBookClubForUser(session.user.id, name);
+  await createBookClubForUser(user.id, name);
   redirect("/book-clubs");
 }
 
 export const dynamic = "force-dynamic";
 
 export default async function NewBookClubPage() {
-  const { data: session } = await getSessionSafely();
+  const { data: session } = await getSession();
 
   if (!session?.user) {
     redirect("/signin");

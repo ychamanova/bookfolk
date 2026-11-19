@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
-import { getSessionSafely } from "@/lib/auth/server";
+import { Button } from "@/components/ui/button";
+import { signOut } from "@/lib/auth/actions";
+import { getSession } from "@/lib/auth/server";
 
 export default async function AccountPage() {
-  const { data: session } = await getSessionSafely();
+  const { data: session } = await getSession();
 
   if (!session?.user) {
     redirect("/signin");
@@ -24,6 +26,11 @@ export default async function AccountPage() {
             <span>{session.user.email}</span>
           </div>
         </div>
+        <form action={signOut} className="mt-6">
+          <Button type="submit" variant="outline">
+            Log out
+          </Button>
+        </form>
       </div>
     </main>
   );

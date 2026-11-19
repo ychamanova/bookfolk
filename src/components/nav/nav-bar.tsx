@@ -6,11 +6,11 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import { signOut } from "@/lib/auth/actions";
-import { getSessionSafely } from "@/lib/auth/server";
+import { getSession } from "@/lib/auth/server";
 import { cn } from "@/lib/utils";
 
 export async function NavBar() {
-  const { data: session } = await getSessionSafely();
+  const { data: session } = await getSession();
 
   return (
     <nav className="w-full border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70 sticky top-0 z-50">
